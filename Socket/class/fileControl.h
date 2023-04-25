@@ -6,6 +6,7 @@
 #include <chrono>
 #include <thread>
 #include <unordered_set>
+#include<string>
 namespace fs = std::filesystem;
 
 class FileController
@@ -20,11 +21,12 @@ public:
     };
     virtual ~FileController();
     FileController();
-    FileController(fs::path path);
+    FileController(std::string path);
     FileController(const FileController& fc);
     FileController& operator=(const FileController& fc);
 
     fs::file_time_type get_last_time_edit();
+    bool isChanged();
     bool isCreateNews();
     bool isDeleted();
     void printMessage();
