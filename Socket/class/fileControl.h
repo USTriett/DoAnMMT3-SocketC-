@@ -30,6 +30,7 @@ public:
     bool isCreateNews();
     bool isDeleted();
     void printMessage();
+    void updateFiles();
 
 private:
     // int count;
