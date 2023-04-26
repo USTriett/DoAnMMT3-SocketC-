@@ -4,7 +4,7 @@
 #include <thread>
 #include <unordered_set>
 #include "fileControl.h"
-
+#include"PathHash.h"
 namespace fs = std::filesystem;
 void FileController::InitFiles(fs::path path)
 {
@@ -12,6 +12,10 @@ void FileController::InitFiles(fs::path path)
     {
         this->files.insert(entry.path());
     }
+}
+
+FileController::~FileController()
+{
 }
 
 FileController::FileController()
@@ -42,7 +46,7 @@ fs::file_time_type FileController::get_last_time_edit()
 
 bool FileController::isChanged()
 {
-    if (this->get_last_time_edit() == this->last_time_edit)
+    if (this->get_last_time_edit() != this->last_time_edit)
     {
         this->last_time_edit = fs::last_write_time(path_to_watch);
         return true;
@@ -52,18 +56,17 @@ bool FileController::isChanged()
 
 bool FileController::isCreateNews()
 {
-    if (this->isChanged())
+
+    for (const auto &entry : fs::directory_iterator(path_to_watch))
     {
-        for (const auto &entry : fs::directory_iterator(path_to_watch))
+        if (files.find(entry.path()) == files.end()) // if entry.path() does not have in directory find() return files.end()
         {
-            if (files.find(entry.path()) == files.end()) // if entry.path() does not have in directory find() return files.end()
-            {
-                std::cout << "New file: " << entry.path() << '\n';
-                this->updateFiles();
-                return true;
-            }
+            std::cout << "New file: " << entry.path() << '\n';
+            this->updateFiles();
+            return true;
         }
     }
+
     return false;
 }
 
@@ -80,15 +83,17 @@ bool FileController::isDeleted()
         {
             std::cout << "Deleted file: " << path << '\n';
             this->updateFiles();
+            directories.clear();
             return true;
         }
     }
+    directories.clear();
     return false;
 }
 
 void FileController::printMessage()
 {
-    std::cout << "Folder Changed!\n";
+    std::cout << "Start watching at " << this->path_to_watch << '\n';
 }
 
 void FileController::updateFiles()

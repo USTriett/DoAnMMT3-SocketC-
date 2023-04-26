@@ -7,18 +7,13 @@
 #include <thread>
 #include <unordered_set>
 #include<string>
+#include"PathHash.h"
 namespace fs = std::filesystem;
 
 class FileController
 {
 public:
-    static struct PathHash
-    {
-        std::size_t operator()(const fs::path &p) const
-        {
-            return std::hash<std::string>{}(p.string());
-        }
-    };
+    
     virtual ~FileController();
     FileController();
     FileController(std::string path);
@@ -35,7 +30,7 @@ public:
 private:
     // int count;
     fs::path path_to_watch;
-    std::unordered_set<fs::path, FileController::PathHash> files; // files in directories
+    std::unordered_set<fs::path, PathHash> files; // files in directories
     fs::file_time_type last_time_edit;
 
     void InitFiles(fs::path path);
