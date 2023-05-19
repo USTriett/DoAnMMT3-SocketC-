@@ -1,0 +1,14 @@
+socket server send request -> s.client -> start proccess send response (0/1)
+1. List ra các app đang chạy trên client - start, stop app Triết
+2. List ra các process đang chạy trên client - start, stop Triết 55%
+3. Chụp màn hình (live) lưu trữ ? gửi file ảnh ? ? Hoa Viên 50%
+4. Bắt phím nhấn (bắt key event ở stream input key board mouse) Eric 30%
+5. Duyệt cây thư mục (browse directory) có thư viện, demo rồi. 60%
+
+3 tuần: 2 đồ án - 1 tuần chiều thứ 6 (14h)
+
+tuần 3:
+Hoàn thiện các chức năng còn dang dở.(bắt buộc)
+thử demo bằng đồ hoạ. (nghiên cứu có thì tốt)
+viết báo cáo. phần thực hiện của mình. (đứa nào cũng làm)
+Buổi họp tiếp theo: 9/5/2023

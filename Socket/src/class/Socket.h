@@ -1,8 +1,9 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+
+#endif
 #ifndef SOCKET_H
 #define SOCKET_H
-#endif
 #define _WIN32_WINNT 0x0600
 #define MAX_CONNECTIONS 1
 #include <windows.h>
