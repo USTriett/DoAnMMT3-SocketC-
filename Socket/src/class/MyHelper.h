@@ -8,6 +8,9 @@
 #include<string>
 #include <sstream>
 #include <iomanip>
+#include<cwchar>
+#include <locale>
+#include <codecvt>
 
 class MyHelper{
 public:
@@ -24,24 +27,29 @@ public:
     }
 
     static std::wstring utf8_to_unicode_escape_sequences(const std::wstring& wstr) {
-    // Convert the UTF-8 string to a wide-character string
+        // Convert the UTF-8 string to a wide-character string
 
-    // Convert each wide-character to a Unicode escape sequence
-    std::wstringstream ss;
-    ss << std::hex << std::uppercase << std::setfill(L'0');
-    for (wchar_t c : wstr) {
-        if (c <= 0xFF) {
-            // Characters in the range 0x00-0xFF are represented as \xXX
-            // ss << L"\\x" << std::setw(2) << static_cast<int>(c);
-            ss << c;
-        } else {
-            // Characters outside the range 0x00-0xFF are represented as \uXXXX
-            ss << L"\\u" << std::setw(4) << static_cast<int>(c);
+        // Convert each wide-character to a Unicode escape sequence
+        std::wstringstream ss;
+        ss << std::hex << std::uppercase << std::setfill(L'0');
+        for (wchar_t c : wstr) {
+            if (c <= 0xFF) {
+                // Characters in the range 0x00-0xFF are represented as \xXX
+                // ss << L"\\x" << std::setw(2) << static_cast<int>(c);
+                ss << c;
+            } else {
+                // Characters outside the range 0x00-0xFF are represented as \uXXXX
+                ss << L"\\u" << std::setw(4) << static_cast<int>(c);
+            }
         }
-    }
 
-    return ss.str();
-}
+        return ss.str();
+    }
+    static std::string ptr_wcharToString(const WCHAR* s){
+        std::wstring_convert<std::codecvt_utf8_utf16<WCHAR>> converter;  // Create a converter that can convert between wide and narrow character sets
+        std::string str = converter.to_bytes(s);  // Convert the WCHAR* string to a std::string
+        return str;
+    }
 };
 
 #endif

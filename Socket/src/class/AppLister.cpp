@@ -61,6 +61,7 @@ vector<Software>* AppLister::GetAppListerImp(bool IncludeUpdates)
 			delete InstallerKey;
 	}
 
+	
 	if(UninstallKey)
 		delete UninstallKey;
 	if(Wow64UninstallKey)
@@ -143,9 +144,11 @@ vector<Software>* AppLister::GetUserInstallerKeyPrograms(RegistryKey* uInstaller
 									else
 										Icon = Icon1;
 
-									if ( Name.compare(L"")!=0 ) 
+									if ( Name.compare(L"")!=0 && Icon.compare(L"")!=0) 
 									{
+										
 										AddToList(ExistingProgramList, Software(Name,ProgVersion,InstallLocation,Icon,UserData->KeyArch));
+									
 										ProductFound = true;
 									}
 									delete temp;
@@ -228,7 +231,7 @@ vector<Software>* AppLister::GetUninstallKeyPrograms(RegistryKey* UninstallKey, 
 						wstring uninstallvalue = CurrentSubKey->GetValue(L"UninstallString");
 						if (uninstallvalue.compare(L"")!=0) 
 						{
-                            if ( Name.compare(L"")!=0 ) 
+                            if ( Name.compare(L"")!=0 && Icon.compare(L"")!=0) 
 							{
 								AddToList(ExistingProgramList, Software(Name,ProgVersion,InstallLocation,Icon,UninstallKey->KeyArch));
                             }
@@ -272,7 +275,7 @@ vector<Software>* AppLister::GetUninstallKeyPrograms(RegistryKey* UninstallKey, 
 					else
 						Icon = Icon1;
 
-					if (Name.compare(L"")!=0)
+					if (Name.compare(L"")!=0 && Icon.compare(L"")!=0)
 					{
                         AddToList(ExistingProgramList, Software(Name,ProgVersion,InstallLocation,Icon,UninstallKey->KeyArch));
                     }

@@ -6,11 +6,14 @@
 #define ProcessCONTROLLER_H
 
 #include <Windows.h>
-#include <iostream>
-#include <Psapi.h> // thư viện để lấy tên ứng dụng từ Process ID (PID)
+#include <iostream> 
 #include <cstring>
+#include<string>
 #include<vector>
 #include<algorithm>
+#include <process.h>
+#include <Psapi.h>
+#include <tlhelp32.h>
 #define MAX_PROCESSES 1024
 
 class ProcessController
@@ -22,15 +25,19 @@ public:
     virtual ~ProcessController();
     ProcessController &operator=(const ProcessController a) = delete;
     DWORD getNumberOfProcessess(); // co bug
-    std::vector<DWORD> getProcessIdOfProgram(const char* pname); 
-    void closeProgram(const char *programName);
+    std::vector<DWORD> getProcessIdOfProgram(std::wstring pname); 
+    void closeProgram(std::wstring programName);
     // bool openProgram(const char *programName);
     void listAllProgram();
-    void listAllProcessOfProgram(const char *programName);
+    void listAllProcessOfProgram(std::wstring programName);
     bool startApp(std::wstring path);
 private:
-    DWORD processIDs[MAX_PROCESSES], bytesReturned;
+    // std::vector<std::pair<DWORD, std::wstring>> vprocesses;
     void update();
+    static DWORD numberOfProcess;
+    static HANDLE hSnapShot;
+    std::vector<PROCESSENTRY32W> processes;
+    
 };
 
 #endif

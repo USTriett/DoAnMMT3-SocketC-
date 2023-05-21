@@ -1,10 +1,24 @@
 #include "ProcessController.h"
+#include "MyHelper.h"
+#include <cwchar>
+#include <cstring>
+// init static value
+HANDLE ProcessController::hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+DWORD ProcessController::numberOfProcess = 0;
 
 ProcessController::ProcessController()
 {
-    if (!EnumProcesses(processIDs, sizeof(processIDs), &bytesReturned)) // lay tat ca ca quy trinh id -> bytesReturned
+    PROCESSENTRY32W process;
+    process.dwSize = sizeof(PROCESSENTRY32W);
+    if (Process32FirstW(hSnapShot, &process))
     {
-        std::cout << "\nFailed to enumerate processes.\n";
+        do
+        {
+            ProcessController::numberOfProcess++;
+            
+
+            this->processes.push_back(process);
+        } while (Process32NextW(hSnapShot, &process));
     }
 }
 
@@ -14,96 +28,51 @@ ProcessController::~ProcessController()
 
 DWORD ProcessController::getNumberOfProcessess()
 {
-    return this->bytesReturned / sizeof(DWORD);
+    return ProcessController::numberOfProcess;
 }
 
-std::vector<DWORD> ProcessController::getProcessIdOfProgram(const char *pname)
+std::vector<DWORD> ProcessController::getProcessIdOfProgram(std::wstring pname)
 {
     std::vector<DWORD> vid;
-    DWORD numProcesses = this->getNumberOfProcessess();
-    
-    for (DWORD i = 0; i < numProcesses; ++i)
+    for (const auto &i : processes)
     {
-        HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_TERMINATE, FALSE, processIDs[i]);
-        if (hProcess)
+        int size = wcslen(i.szExeFile) + 1;
+        std::wstring name(size, L' ');
+        wcscpy_s(const_cast<wchar_t *>(name.data()), name.size() + 1, i.szExeFile);
+        if (wcsicmp(name.c_str(), pname.c_str()) == 0)
         {
-            // std::cout << "\nProcess " << i << "\n";
-            HMODULE hMods[1024];
-            DWORD cbNeeded;
-            char processName[MAX_PATH] = {0};
+            std::wcout << "IDs: " << i.th32ProcessID << " ";
 
-            // lay ten ung dung tu Process ID (PID)
-            if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded))
-            {
-                if (GetModuleBaseNameA(hProcess, NULL, processName, sizeof(processName)))
-                {
-                    // std::cout << processName << std::endl;
-                    if (!strcmp(processName, pname))
-                    {
-                        vid.push_back(processIDs[i]);
-                    }
-                }
-            }
-
-            CloseHandle(hProcess);
+            vid.push_back(i.th32ProcessID);
         }
-
-        CloseHandle(hProcess);
     }
-    
+
     return vid;
 }
 
-void ProcessController::closeProgram(const char *programName)
+void ProcessController::closeProgram(std::wstring programName)
 {
+    // std::wcout << programName << std::endl;
     std::vector<DWORD> vid = this->getProcessIdOfProgram(programName);
-    for(auto i = vid.begin(); i != vid.end(); ++i)
+    std::vector<HANDLE> processHandles;
+
+    for (auto id : vid)
     {
-        HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_TERMINATE, FALSE, *i);
-        if (hProcess)
-        {
-            // std::cout << "\nProcess " << i << "\n";
-            HMODULE hMods[1024];
-            DWORD cbNeeded;
-            char processName[MAX_PATH] = {0};
+        // std::wcout << id << " " ;
+        HANDLE handle = OpenProcess(PROCESS_TERMINATE, FALSE, id);
+        processHandles.push_back(handle);
+    }
 
-            // lay ten ung dung tu Process ID (PID)
-            if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded))
-            {
-                if (GetModuleBaseNameA(hProcess, NULL, processName, sizeof(processName)))
-                {
-                    // std::cout << processName << std::endl;
-                    if (!strcmp(processName, programName))
-                    {
-                        std::cout << "\nProgram Found!\n";
-                        try
-                        {
-                            if (!TerminateProcess(hProcess, 0))
-                            {
-                                std::cerr << "Failed to terminate process.\n";
-                            }
-                            else
-                            {
-                                std::cout << "Success!\n";
-                            }
-                        }
-                        catch(...)//catch all exception
-                        {
-                            std::cerr<< "Something wrong!\n";
-                            throw;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                std::cout << "\nFailed to enumerate process modules." << std::endl;
-            }
+    // Terminate processes
+    for (auto handle : processHandles)
+    {
+        TerminateProcess(handle, 0);
+    }
 
-            CloseHandle(hProcess);
-        }
-
-        CloseHandle(hProcess);
+    // Close handles
+    for (auto handle : processHandles)
+    {
+        CloseHandle(handle);
     }
     this->update();
 }
@@ -111,143 +80,56 @@ void ProcessController::closeProgram(const char *programName)
 void ProcessController::listAllProgram()
 {
     DWORD numProcesses = this->getNumberOfProcessess();
-
-    for (DWORD i = 0; i < numProcesses; ++i)
+    std::wcout << L"Number of running processes: " << numProcesses << std::endl;
+    for (const auto &i : processes)
     {
-        HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processIDs[i]);
-        if (hProcess)
-        {
-            std::cout << "\nProcess " << i << "\n";
-            HMODULE hMods[1024];
-            DWORD cbNeeded;
-            char processName[MAX_PATH] = {0};
-
-            // lay ten ung dung tu Process ID (PID)
-            if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded))
-            {
-                if (GetModuleBaseNameA(hProcess, NULL, processName, sizeof(processName)))
-                {
-                    std::cout << processName << std::endl;
-                }
-            }
-            else
-            {
-                std::cout << "\nFailed to enumerate process modules." << std::endl;
-            }
-
-            CloseHandle(hProcess);
-        }
-
-        CloseHandle(hProcess);
+        std::wcout << L"\nProcess ID: " << i.th32ProcessID << std::endl;
+        std::wcout << "Main program: " << i.szExeFile << std::endl;
+        std::wcout << "Current Threads: " << i.cntThreads << std::endl;
+        std::wcout << "Page faults: " << i.cntUsage << std::endl;
     }
 }
 
-void ProcessController::listAllProcessOfProgram(const char *programName)
+void ProcessController::listAllProcessOfProgram(std::wstring programName)
 {
     std::vector<DWORD> vid = this->getProcessIdOfProgram(programName);
-    for(auto i = vid.begin(); i != vid.end(); ++i)
+    int count = 0;
+    for(const auto& i : vid)
     {
-        std::cout <<"Process ID: " << *i << std::endl;
-        HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, *i);
-        if (hProcess)
-        {
-            // std::cout << "\nProcess " << i << "\n";
-            HMODULE hMods[1024];
-            DWORD cbNeeded;
-            char processName[MAX_PATH] = {0};
+        // DWORD temp = i;
+        auto it = std::find_if(processes.begin(), processes.end(), 
+         [&i](const PROCESSENTRY32W &p) { return p.th32ModuleID == i; });
+        if (it != processes.end()) {
+            // Element found
+            count++;
+            std::wcout << L"\nProcess ID: " << it->th32ProcessID << std::endl;
+            std::wcout << "Main program: " << it->szExeFile << std::endl;
+            std::wcout << "Current Threads: " << it->cntThreads << std::endl;
+            std::wcout << "Page faults: " << it->cntUsage << std::endl;
 
-            // lay ten ung dung tu Process ID (PID)
-            if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded))
-            {
-                if (GetModuleBaseNameA(hProcess, NULL, processName, sizeof(processName)))
-                {
-                    // std::cout << processName << std::endl;
-                    if (!strcmp(processName, programName))
-                    {
-                        std::cout << "\nProgram Found!\n";
-                        try
-                        {
-                            if (!TerminateProcess(hProcess, 0))
-                            {
-                                std::cerr << "Failed to terminate process.\n";
-                            }
-                            else
-                            {
-                                std::cout << "Success!\n";
-                            }
-                        }
-                        catch(...)//catch all exception
-                        {
-                            std::cerr<< "Something wrong!\n";
-                            throw;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                std::cout << "\nFailed to enumerate process modules." << std::endl;
-            }
-
-            CloseHandle(hProcess);
         }
-
-        CloseHandle(hProcess);
+        // std::wcout << i << std::endl;
     }
-}
-
-bool ProcessController::startApp(std::wstring path)
-{
-     try
+    if(!count)
     {
-        // std::string myString(appPath.begin(), appPath.end());
-        STARTUPINFOA si;
-        PROCESS_INFORMATION pi;
-        ZeroMemory(&si, sizeof(si));
-        si.cb = sizeof(si);
-        ZeroMemory(&pi, sizeof(pi));
-        
-        std::string myString1(path.begin(), path.end());
-        std::string myResult = "explorer " + myString1;
-        char* myLPSTR = new char[myResult.length() + 1];
-        strcpy(myLPSTR, myResult.c_str());
-        // Start the child process.
-        if (!CreateProcessA(NULL,    // No module name (use command line)
-                            myLPSTR, // Command line
-                            NULL,    // Process handle not inheritable
-                            NULL,    // Thread handle not inheritable
-                            FALSE,   // Set handle inheritance to FALSE
-                            0,       // No creation flags
-                            NULL,    // Use parent's environment block
-                            NULL,    // Use parent's starting directory
-                            &si,     // Pointer to STARTUPINFO structure
-                            &pi)     // Pointer to PROCESS_INFORMATION structure
-        )
-        {
-            printf("CreateProcess failed (%d).\n", GetLastError());
-            return false;
-        }
-
-        // Wait until child process exits.
-        WaitForSingleObject(pi.hProcess, INFINITE);
-
-        // Close process and thread handles.
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
-        return true;
+        std::cout << "The program is not running now....\n";
     }
-    catch (...)
-    {
-        // std:: cout << e;
-    }
-    return false;
+
 }
 
 void ProcessController::update()
 {
-    std::fill(processIDs, processIDs + MAX_PROCESSES, 0);
-    if (!EnumProcesses(processIDs, sizeof(processIDs), &bytesReturned)) // lay tat ca ca quy trinh id -> bytesReturned
+    ProcessController::hSnapShot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    ProcessController::numberOfProcess = 0;
+    PROCESSENTRY32W process;
+    process.dwSize = sizeof(PROCESSENTRY32W);
+    if (Process32FirstW(hSnapShot, &process))
     {
-        std::cout << "\nFailed to enumerate processes.\n";
+        do
+        {
+            ProcessController::numberOfProcess++;
+
+            this->processes.push_back(process);
+        } while (Process32NextW(hSnapShot, &process));
     }
 }
