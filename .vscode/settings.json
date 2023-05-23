@@ -68,6 +68,13 @@
         "xtree": "cpp",
         "xutility": "cpp",
         "regex": "cpp",
-        "codecvt": "cpp"
+        "codecvt": "cpp",
+        "condition_variable": "cpp",
+        "coroutine": "cpp",
+        "resumable": "cpp",
+        "functional": "cpp",
+        "future": "cpp",
+        "mutex": "cpp",
+        "unordered_map": "cpp"
     }
 }

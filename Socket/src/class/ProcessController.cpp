@@ -77,17 +77,19 @@ void ProcessController::closeProgram(std::wstring programName)
     this->update();
 }
 
-void ProcessController::listAllProgram()
+std::wstring ProcessController::listAllProgram()
 {
     DWORD numProcesses = this->getNumberOfProcessess();
-    std::wcout << L"Number of running processes: " << numProcesses << std::endl;
+    std::wstringstream ss;
+    ss << L"Number of running processes: " << numProcesses << std::endl;
     for (const auto &i : processes)
     {
-        std::wcout << L"\nProcess ID: " << i.th32ProcessID << std::endl;
-        std::wcout << "Main program: " << i.szExeFile << std::endl;
-        std::wcout << "Current Threads: " << i.cntThreads << std::endl;
-        std::wcout << "Page faults: " << i.cntUsage << std::endl;
+        ss << L"\nProcess ID: " << i.th32ProcessID << std::endl;
+        ss << "Main program: " << i.szExeFile << std::endl;
+        ss << "Current Threads: " << i.cntThreads << std::endl;
+        ss << "Page faults: " << i.cntUsage << std::endl;
     }
+    return ss.str();
 }
 
 void ProcessController::listAllProcessOfProgram(std::wstring programName)
@@ -115,6 +117,39 @@ void ProcessController::listAllProcessOfProgram(std::wstring programName)
         std::cout << "The program is not running now....\n";
     }
 
+}
+
+bool ProcessController::startApp(std::wstring exePath)
+{
+    STARTUPINFOW si;
+    PROCESS_INFORMATION pi;
+    
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+    
+    // Start the child process. 
+    if (!CreateProcessW(exePath.c_str(),   // No module name (use command line) 
+        nullptr,        // Command line 
+        nullptr,           // Process handle not inheritable 
+        nullptr,        // Thread handle not inheritable 
+        FALSE,          // Set handle inheritance to FALSE 
+        0,              // No creation flags 
+        nullptr,        // Use parent's environment block 
+        nullptr,        // Use parent's starting directory 
+        &si,            // Pointer to STARTUPINFO structure
+        &pi))           // Pointer to PROCESS_INFORMATION structure
+    {
+        std::cout << "CreateProcess failed" << std::endl;
+    }
+        
+    // Wait until child process exits.
+    WaitForSingleObject(pi.hProcess, INFINITE);
+        
+    // Close process and thread handles. 
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    return false;
 }
 
 void ProcessController::update()

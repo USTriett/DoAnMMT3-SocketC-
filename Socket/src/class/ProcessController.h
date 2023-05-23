@@ -28,9 +28,9 @@ public:
     std::vector<DWORD> getProcessIdOfProgram(std::wstring pname); 
     void closeProgram(std::wstring programName);
     // bool openProgram(const char *programName);
-    void listAllProgram();
+    std::wstring listAllProgram();
     void listAllProcessOfProgram(std::wstring programName);
-    bool startApp(std::wstring path);
+    bool static startApp(std::wstring path);
 private:
     // std::vector<std::pair<DWORD, std::wstring>> vprocesses;
     void update();
