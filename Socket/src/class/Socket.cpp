@@ -200,6 +200,7 @@ SocketServer::SocketServer(int port, int connections, TypeSocket type)
 
 Socket *SocketServer::Accept()
 {
+
   SOCKET new_sock = accept(s_, 0, 0);
   if (new_sock == INVALID_SOCKET)
   {

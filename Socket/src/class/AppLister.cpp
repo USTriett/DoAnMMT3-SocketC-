@@ -10,6 +10,10 @@ Software::Software(wstring name, wstring version, wstring location, wstring icon
 {
 }
 
+Software::Software(wstring name, wstring version, wstring location, wstring icon): DisplayName(name), Version(version), InstallLocation(location), Icon(icon)
+{
+}
+
 AppLister::AppLister(void)
 {
 }

@@ -29,7 +29,7 @@ public:
     void closeProgram(std::wstring programName);
     // bool openProgram(const char *programName);
     std::wstring listAllProgram();
-    void listAllProcessOfProgram(std::wstring programName);
+    std::wstring listAllProcessOfProgram(std::wstring programName);
     bool static startApp(std::wstring path);
 private:
     // std::vector<std::pair<DWORD, std::wstring>> vprocesses;

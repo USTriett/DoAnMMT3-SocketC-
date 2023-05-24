@@ -24,12 +24,12 @@ public:
 	wstring appPath;
 	Software(wstring, wstring, wstring, wstring, Arch, wstring appPath);
 	Software(wstring, wstring, wstring, wstring, Arch);
+	Software(wstring, wstring, wstring, wstring);
 	friend std::wostream& operator<<(std::wostream& os, const Software& sw) {
-        os << L"Display Name: " << MyHelper::utf8_to_unicode_escape_sequences(sw.DisplayName) << std::endl;
-        os << L"Install Location: " << MyHelper::utf8_to_unicode_escape_sequences(sw.InstallLocation) << std::endl;
-        os << L"Version: " << MyHelper::utf8_to_unicode_escape_sequences(sw.Version) << std::endl;
-        // os << L"Architecture: " << (sw.Architecture == Arch::X86 ? L"32-bit" : L"64-bit") << std::endl;
-        os << L"Icon: " << MyHelper::utf8_to_unicode_escape_sequences(sw.Icon) << std::endl;
+        os << MyHelper::utf8_to_unicode_escape_sequences(sw.DisplayName) << std::endl;
+        os << MyHelper::utf8_to_unicode_escape_sequences(sw.InstallLocation) << std::endl;
+        os << MyHelper::utf8_to_unicode_escape_sequences(sw.Version) << std::endl;
+        os << MyHelper::utf8_to_unicode_escape_sequences(sw.Icon) << std::endl;
         return os;
     }
 	

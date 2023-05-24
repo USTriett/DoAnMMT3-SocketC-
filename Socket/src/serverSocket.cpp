@@ -4,87 +4,167 @@
 #include <list>
 #include <iostream>
 #include "./class/ProcessController.h"
-#include "./class/AppLister.h"
+#include "./class/KeyEvent.h"
+#include "./class/MyHelper.h"
 #include <thread>
 #include <future>
+#include"./class/AppLister.h"
 typedef std::list<Socket *> socket_list;
 
-socket_list g_connections;
-
-void printApp(std::promise<wstring> &prom)
+int Menu(int choice)
 {
-  std::vector<Software> *ptr = AppLister::GetAppLister(0);
-  std::wstringstream ss;
-  for (int i = 0; i < ptr->size(); i++)
+  if (choice == 1)
   {
-    ss << ptr->at(i) << std::endl;
   }
-  prom.set_value(ss.str());
-}
-
-void printProcess(std::promise<wstring> &prom)
-{
-  ProcessController pc;
-  prom.set_value(pc.listAllProgram());
-}
-unsigned __stdcall Connection(void *a)
-{
-  Socket *s = (Socket *)a;
-
-  g_connections.push_back(s);
-
-  std::cout << "Connect Success\n";
-  std::promise<std::wstring> prom;
-
-  // Lấy future từ promise
-  std::future<std::wstring> fut = prom.get_future();
-  while (1)
-  {
-
-    std::thread t1(printApp, std::ref(prom));
-    std::wstring result = fut.get();
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    std::string str = converter.to_bytes(result);
-    std::cout << str;
-    s->SendBytes(str);
-    t1.join();
-    // t2.join();
-
-    s->SendLine("input '.' to end");
-    std::string req = s->ReceiveLine();
-    std::cout << req << endl;
-    // cout << str.length() << endl;
-    system("pause");
-    if (req.compare(".\n") == 0)
-      break;
-  }
-
-  g_connections.remove(s);
-
-  delete s;
-
-  return 0;
 }
 
 int main()
 {
   SocketServer in(8001, 1);
 
-  while (1)
+  Socket *s = in.Accept();
+  std::cout << "Client connected\n";
+
+  while (s != 0)
   {
-    Socket *s = in.Accept();
-    unsigned threadID;
-    HANDLE hThread = (HANDLE)_beginthreadex(0, 0, Connection, (void *)s, 0, &threadID);
-    // Kiểm tra xem hàm _beginthreadex có thực thi thành công không
-    if (hThread == NULL)
+
+    std::string message = "";
+    int start = time(NULL);
+    while (difftime(time(NULL), start) < 40)
     {
-      // Xử lý lỗi ở đây
-      std::cerr << "cannot init thread" << std::endl;
+      message = s->ReceiveBytes();
+      if (message == "")
+        continue;
+      else
+      {
+        break;
+      }
     }
-    //// Sau khi sử dụng luồng, kết thúc luồng bằng cách gọi hàm _endthreadex với tham số là 0
-    _endthreadex(0);
-    // Sau khi kết thúc luồng, hủy bỏ handle của luồng bằng cách gọi hàm CloseHandle
-    CloseHandle(hThread);
+    std::cout << "Client choice: " << message << std::endl;
+    if (message == "")
+    {
+      // s->Close();
+      // s = nullptr;
+      // s = in.Accept();
+      // continue;
+      break;
+    }
+    else if (message == "1")
+    {
+      int flag = 0;
+      while (true)
+      {
+        message = s->ReceiveBytes();
+        if (message == "ESC")
+        {
+          cout << "Stop Send Key!\n";
+          break;
+        }
+        sendKeyEvent(s, flag);
+        Sleep(150);
+      }
+    }
+    else if (message == "21" || message == "41")
+    {
+      ProcessController pc;
+      std::wstring wstr = pc.listAllProgram();
+      std::cout << MyHelper::convertWStringtoStr(wstr) << endl;
+      s->SendBytes(MyHelper::convertWStringtoStr(wstr));
+    }
+    else if (message == "22")
+    {
+      ProcessController pc;
+
+      std::wstring wstr = pc.listAllProgram();
+      s->SendBytes(MyHelper::convertWStringtoStr(wstr));
+      start = time(NULL);
+
+      while (difftime(time(NULL), start) < 20)
+      {
+        message = s->ReceiveBytes();
+        if (message == "")
+          continue;
+        else
+        {
+          break;
+        }
+      }
+
+      pc.closeProgram(MyHelper::strToWstr(message));
+    }
+    else if (message == "23")
+    {
+      ProcessController pc;
+      start = time(NULL);
+
+      while (difftime(time(NULL), start) < 20)
+      {
+        message = s->ReceiveBytes();
+        if (message == "")
+          continue;
+        else
+        {
+          break;
+        }
+      }
+      std::wstring wstr = pc.listAllProcessOfProgram(MyHelper::strToWstr(message));
+      std::wcout << wstr;
+      s->SendBytes(MyHelper::convertWStringtoStr(wstr));
+    }
+    else if (message == "42")
+    {
+      ProcessController pc;
+
+      std::wstring wstr = pc.listAllProgram();
+      s->SendBytes(MyHelper::convertWStringtoStr(wstr));
+      start = time(NULL);
+
+      while (difftime(time(NULL), start) < 20)
+      {
+        message = s->ReceiveBytes();
+        if (message == "")
+          continue;
+        else
+        {
+          break;
+        }
+      }
+
+      pc.closeProgram(MyHelper::strToWstr(message));
+    }
+    else if (message == "43")
+    {
+      vector<Software>* v = AppLister::GetAppLister(true);
+      std::wstringstream ss;
+      for(int i = 0; i < v->size(); i++)
+      {
+        ss << v->at(i);
+        // wcout << v->at(i);
+      }
+      wstring rdata = MyHelper::wstring_to_utf8_wstring(ss.str());
+      wcout << rdata;
+      s->SendBytes(MyHelper::convertWStringtoStr(rdata));
+      start = time(NULL);
+      while (difftime(time(NULL), start) < 20)
+      {
+        message = s->ReceiveBytes();
+        if (message == "")
+          continue;
+        else
+        {
+          break;
+        }
+      }
+      ProcessController pc;
+      
+      if(pc.startApp(MyHelper::strToWstr(message)))
+      {
+        cout << "Start success\n";
+      }
+    }
+
+    fflush(stdout);
   }
+  fflush(stdout);
   return 0;
 }
