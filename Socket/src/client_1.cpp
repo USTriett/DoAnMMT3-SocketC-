@@ -1,12 +1,14 @@
 #include "./class/Socket.h"
 #include <iostream>
-#include<set>
+#include <set>
 #include <chrono>
 #include <thread>
 #include "./class/KeyEvent.h"
 #include "./class/ProcessController.h"
 #include "./class/MyHelper.h"
-#include"./class/AppLister.h"
+#include "./class/AppLister.h"
+#include "./class/Screenshot.h"
+#include "./class/fileControl.h"
 #include <stdlib.h>
 using namespace std;
 using namespace std;
@@ -21,8 +23,9 @@ struct myProcess
   string pageFaults;
 };
 
-bool operator<(const myProcess& p1, const myProcess& p2) {
-  return p1.mainProg < p2.mainProg;  // Compare based on process ID
+bool operator<(const myProcess &p1, const myProcess &p2)
+{
+  return p1.mainProg < p2.mainProg; // Compare based on process ID
 }
 
 std::vector<Software> convertDataToSoftware(const string &data)
@@ -35,7 +38,7 @@ std::vector<Software> convertDataToSoftware(const string &data)
   while (std::getline(iss, line[count]))
   {
     // wcout << MyHelper::strToWstr(line[count]) << endl;
-    
+
     if (count == 3)
     {
       // Software s(MyHelper::strToWstr(line[0]),MyHelper::strToWstr(line[1]),MyHelper::strToWstr(line[2]),MyHelper::strToWstr(line[3]));
@@ -127,7 +130,7 @@ int Menu()
     return 20 + choice;
   }
 
-  if (choice == 4)
+  else if (choice == 4)
   {
     std::cout << "1.Show Running App\n";
     std::cout << "2.Stop App\n";
@@ -151,7 +154,32 @@ int Menu()
 
     return 40 + choice;
   }
-
+  else if (choice == 5)
+  {
+    std::cout << "1. Listen to File/Folder\n";
+    std::cout << "2. List All File/Folders in a directory (recursive)\n\n";
+    // std::cout << "3. Listen to File/Folder\n\n";
+    std::cout << "input your Choice: ";
+    choice = 50;
+    do
+    {
+      try
+      {
+        fflush(stdin);
+        fflush(stdout);
+        std::cin >> choice;
+        std::cin.ignore();
+      }
+      catch (const char *s)
+      {
+        std::cerr << s << endl;
+      }
+      if (choice <= 2 && choice >= 1)
+        break;
+      cout << "Your choice:";
+    } while (true);
+    return 50 + choice;
+  }
   return choice;
 }
 
@@ -195,16 +223,18 @@ void process(SocketClient s, string choice)
   }
   else if (choice == "21")
   {
-    // fflush(stdout);
+    fflush(stdout);
+    fflush(stdin);
+
     int start = time(NULL);
 
     while (difftime(time(NULL), start) < 20)
     {
       string data = s.ReceiveBytes();
-      cout << "Current Processes on Client:\n";
+      // cout << "Current Processes on Client:\n";
       // cout << data << endl;
       vector<myProcess> pcs = convertData(data);
-      cout << pcs.size() << endl;
+      // cout << pcs.size() << endl;
       for (const auto &i : pcs)
       {
         cout << "Process ID: " << i.p_id << std::endl;
@@ -212,6 +242,9 @@ void process(SocketClient s, string choice)
         cout << "Current Threads: " << i.current_thread << std::endl;
         cout << "Page faults: " << i.pageFaults << std::endl;
       }
+      if(pcs.size() > 0)
+        system("pause");
+        
       if (data != "")
         break;
     }
@@ -219,13 +252,13 @@ void process(SocketClient s, string choice)
   }
   else if (choice == "22")
   {
-    // fflush(stdout);
+    fflush(stdin);
     int start = time(NULL);
 
     while (difftime(time(NULL), start) < 20)
     {
       string data = s.ReceiveBytes();
-      cout << "Current Processes on Client:\n";
+      // cout << "Current Processes on Client:\n";
       // cout << data << endl;
       vector<myProcess> pcs = convertData(data);
       cout << pcs.size() << endl;
@@ -233,6 +266,9 @@ void process(SocketClient s, string choice)
       {
         cout << "Main program: " << i.mainProg << std::endl;
       }
+      if(pcs.size()>0)
+        system("pause");
+
       if (data != "")
         break;
     }
@@ -242,9 +278,12 @@ void process(SocketClient s, string choice)
     s.SendBytes(name);
     string message = s.ReceiveBytes();
     cout << message << endl;
+    system("pause");
   }
   else if (choice == "23")
   {
+    fflush(stdout);
+
     fflush(stdin);
     string name;
     cout << "input program name: ";
@@ -256,10 +295,10 @@ void process(SocketClient s, string choice)
     while (difftime(time(NULL), start) < 20)
     {
       string data = s.ReceiveBytes();
-      cout << "The program is running on Processes:\n";
+      // cout << "The program is running on Processes:\n";
       // cout << data << endl;
       vector<myProcess> pcs = convertData(data);
-      cout << pcs.size() << endl;
+      // cout << pcs.size() << endl;
       for (const auto &i : pcs)
       {
         cout << "Process ID: " << i.p_id << std::endl;
@@ -267,17 +306,35 @@ void process(SocketClient s, string choice)
         cout << "Current Threads: " << i.current_thread << std::endl;
         cout << "Page faults: " << i.pageFaults << std::endl;
       }
+      if (pcs.size() > 0)
+      {
+        system("pause");
+      }
       if (data != "")
         break;
     }
-
   }
-  else if(choice == "3")
+  else if (choice == "3")
   {
+    fflush(stdout);
+    fflush(stdin);
+    std::cout << "Nhap ten file luu hinh: ";
+    string filename;
+    std::getline(cin, filename);
+    s.SendBytes(filename);
+    while (!SaveScreenShotToFile(s, filename.c_str()))
+    {
+      // s.SendBytes("resend");
+      cout << "Saving...";
+    }
 
+    // s.SendBytes("success");
   }
-  else if(choice == "41")
+  else if (choice == "41")
   {
+    fflush(stdin);
+    fflush(stdout);
+
     int start = time(NULL);
 
     while (difftime(time(NULL), start) < 20)
@@ -289,16 +346,18 @@ void process(SocketClient s, string choice)
       std::set<myProcess> s(pcs.begin(), pcs.end());
       cout << pcs.size() << endl;
       for (const auto &i : s)
-      {     
+      {
         cout << "Main program: " << i.mainProg << std::endl;
       }
       if (data != "")
         break;
     }
   }
-  else if(choice == "42")
+  else if (choice == "42")
   {
-     int start = time(NULL);
+    fflush(stdin);
+    fflush(stdout);
+    int start = time(NULL);
 
     while (difftime(time(NULL), start) < 20)
     {
@@ -309,7 +368,7 @@ void process(SocketClient s, string choice)
       std::set<myProcess> s(pcs.begin(), pcs.end());
       cout << pcs.size() << endl;
       for (const auto &i : s)
-      {     
+      {
         cout << "Main program: " << i.mainProg << std::endl;
       }
       if (data != "")
@@ -323,13 +382,15 @@ void process(SocketClient s, string choice)
     string message = s.ReceiveBytes();
     cout << message << endl;
   }
-  else if(choice == "43")
+  else if (choice == "43")
   {
+    fflush(stdin);
+    fflush(stdout);
     int start = time(NULL);
 
     while (difftime(time(NULL), start) < 20)
     {
-      
+
       string data = s.ReceiveBytes();
       // cout << ":\n";
       cout << data << endl;
@@ -348,6 +409,74 @@ void process(SocketClient s, string choice)
     getline(cin, path);
     s.SendBytes(path);
   }
+  // else if (choice == "51")
+  // {
+  //   fflush(stdin);
+  //   fflush(stdout);
+  //   int start = time(NULL);
+  //   // fflush(stdout);
+  //   cout << "Default directory: C:\\";
+  //   while (difftime(time(NULL), start) < 20)
+  //   {
+  //     string data = s.ReceiveBytes();
+
+  //     cout << data << endl;
+  //     if (data != "")
+  //       break;
+  //   }
+  //   system("pause");
+
+  //   fflush(stdin);
+
+  //   // string choosenFolder;
+  //   // cout << "Input directory to show all files inside it: ";
+  //   // getline(cin, choosenFolder);
+  //   // s.SendBytes(choosenFolder);
+  //   // cout << "All files and folders from the above directory: " << endl;
+
+  //   // string dataAllFile = s.ReceiveBytes();
+  //   // cout << dataAllFile << endl;
+  // }
+  else if (choice == "52")
+  {
+    fflush(stdin);
+    fflush(stdout);
+    string choosenFolder;
+    cout << "Input directory to show all files inside it: ";
+    getline(cin, choosenFolder);
+    s.SendBytes(choosenFolder);
+
+    cout << "All files and folders from the above directory: " << endl;
+
+    int start = time(NULL);
+    while (difftime(time(NULL), start) < 10)
+    {
+      string dataAllFiles = s.ReceiveBytes();
+      cout << dataAllFiles;
+      if (dataAllFiles != "")
+        break;
+    }
+    system("pause");
+    // string dataAllFiles = s.ReceiveBytes();
+    // cout << dataAllFiles << endl;
+  }
+  else if (choice == "51")
+  {
+    fflush(stdin);
+    fflush(stdout);
+    cout << "Listen to File/Folder" << endl;
+    int start = time(NULL);
+    string infoChange;
+    while (difftime(time(NULL), start) < 20)
+    {
+      infoChange = s.ReceiveBytes();
+      if (infoChange != "")
+        cout << infoChange << endl;
+    }
+
+    system("pause");
+  }
+
   else
   {
     cout << "Invalid choice\n"
@@ -358,10 +487,11 @@ void process(SocketClient s, string choice)
 int main()
 {
 
+  bool flag = true;
+
   try
   {
-    SocketClient s("127.0.0.1", 8001);
-
+    SocketClient s = SocketClient("127.0.0.1", 8001);
     int start = time(NULL);
     while (true)
     {

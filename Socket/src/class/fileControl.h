@@ -6,8 +6,11 @@
 #include <chrono>
 #include <thread>
 #include <unordered_set>
-#include<string>
-#include"PathHash.h"
+#include "PathHash.h"
+
+#include <string>
+#include <vector>
+using namespace std;
 namespace fs = std::filesystem;
 
 class FileController
@@ -21,11 +24,17 @@ public:
     FileController& operator=(const FileController& fc);
 
     fs::file_time_type get_last_time_edit();
+    vector<string> showDirectFiles();
+    vector<string> showAllFiles(string);
+
     bool isChanged();
     bool isCreateNews();
     bool isDeleted();
     void printMessage();
     void updateFiles();
+
+    string get_path_to_watch();
+    string generalChange();
 
 private:
     // int count;
